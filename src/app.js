@@ -52,7 +52,15 @@ app.post('/categories',async(req,res)=>{
 });
 
 app.get('/games',async(req,res)=>{
-    
+    console.log(req.query.name)
+    if(req.query.name){
+        try{
+            const promisse = await connection.query('SELECT * FROM games WHERE name ILIKE $1',[req.query.name +"%"])
+            res.send(promisse.rows)
+        } catch{
+            res.sendStatus(400);
+        }
+    } else{
     try{
         const promisse = await connection.query('SELECT * FROM games')
         
@@ -62,6 +70,7 @@ app.get('/games',async(req,res)=>{
     } catch{
         res.sendStatus(400);
     }
+}
 });
 
 app.post('/games',async(req,res)=>{
@@ -85,9 +94,98 @@ app.post('/games',async(req,res)=>{
             res.send(409);
         }
 } else {
-    console.log("400 de baixo")
     res.sendStatus(400);
 }
 });
 
+app.get('/customers',async(req,res)=>{
+    if(req.query.cpf){
+        console.log("entrou no if")
+        try{
+            const promisse = await connection.query('SELECT * FROM customers WHERE cpf LIKE $1',[req.query.cpf + "%"])
+            res.send(promisse.rows)
+        } catch{
+            res.sendStatus(400);
+        }
+    } else{
+    try{
+        const promisse = await connection.query('SELECT * FROM customers')
+        res.send(promisse.rows)
+        
+
+    } catch{
+        res.sendStatus(400);
+    }
+}
+});
+app.get('/customers/:id',async(req,res)=>{
+    const id = req.params.id
+    console.log(id)
+    
+        try{
+            const promisse = await connection.query('SELECT * FROM customers WHERE id = $1',[id])
+            if(promisse.rows.length > 0){
+                res.send(promisse.rows)
+            } else {
+                res.sendStatus(404)
+            }
+            
+        } catch{
+            res.sendStatus(404);
+        }
+   
+    
+
+});
+
+app.post('/customers',async(req,res)=>{
+    const {name, cpf, phone, birthday} = req.body
+    
+    if(cpf.length === 11 &&  (phone.length === 10 || phone.length === 11) && name.length > 0){
+        
+        const verify = await connection.query('SELECT * FROM customers WHERE cpf = $1',[cpf])
+        if(verify.rows.length === 0){
+            
+            try{
+                
+                const promisse = await connection.query('INSERT INTO customers (name, cpf, phone, birthday) VALUES ($1, $2, $3, $4)', [name,cpf, phone, birthday])
+                
+                res.sendStatus(201);
+                
+            } catch{
+                res.sendStatus(400);
+            }
+        } else {
+            res.send(409);
+        }
+} else {
+    res.sendStatus(400);
+}
+});
+
+app.put('/customers/:id',async(req,res)=>{
+    const {name, cpf, phone, birthday} = req.body
+    const id = req.params.id
+    
+    if(cpf.length === 11 &&  (phone.length === 10 || phone.length === 11) && name.length > 0){
+        
+        const verify = await connection.query('SELECT * FROM customers WHERE cpf = $1',[cpf])
+        if(verify.rows.length === 0 || verify.rows[0].cpf === cpf){
+            
+            try{
+                
+                const promisse = await connection.query('UPDATE customers SET name = $1, cpf = $2, phone = $3, birthday = $4 WHERE id = $5', [name,cpf, phone, birthday,id])
+                
+                res.sendStatus(200);
+                
+            } catch{
+                res.sendStatus(400);
+            }
+        } else {
+            res.send(409);
+        }
+} else {
+    res.sendStatus(400);
+}
+});
 app.listen(4000,()=>{console.log('server rodando!')})
