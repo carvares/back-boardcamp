@@ -280,7 +280,7 @@ app.post('/rentals/:id/return', async(req,res)=>{
         if(promisse.rows[0].returnDate !== null){
             return res.sendStatus(400)
         }
-        const diffdays = dayjs('2021-06-21').diff(promisse.rows[0].rentDate, 'day')
+        const diffdays = dayjs().diff(promisse.rows[0].rentDate, 'day')
         const delayFee = diffdays > promisse.rows[0].daysRented? (diffdays * ( promisse.rows[0].originalPrice / promisse.rows[0].daysRented)) - promisse.rows[0].originalPrice : 0;
         const rentgame = await connection.query('UPDATE rentals SET "returnDate" = $1 , "delayFee" = $2 WHERE id = $3',["'"+ dayjs().format('YYYY-MM-DD') + "'",delayFee,req.params.id])
         res.sendStatus(200)
